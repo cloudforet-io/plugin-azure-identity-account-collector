@@ -1,6 +1,7 @@
 from spaceone.identity.plugin.account_collector.lib.server import (
     AccountCollectorPluginServer,
 )
+from plugin.manager.base import AzureBaseManager
 
 app = AccountCollectorPluginServer()
 
@@ -20,6 +21,7 @@ def account_collector_init(params: dict) -> dict:
             'metadata': 'dict'
         }
     """
+
     return {"metadata": {}}
 
 
@@ -50,4 +52,22 @@ def account_collector_sync(params: dict) -> dict:
             ]
         }
     """
-    return {"results": []}
+
+    secret_data = params["secret_data"]
+    schema_id = params.get("schema_id")
+    options = params["options"]
+    domain_id = params["domain_id"]
+
+    results = []
+    for account_collector_manager in AzureBaseManager.get_all_managers(options={}):
+        ac_mgr = account_collector_manager()
+        results.extend(
+            ac_mgr.sync(
+                options=options,
+                secret_data=secret_data,
+                domain_id=domain_id,
+                schema_id=schema_id,
+            )
+        )
+
+    return {"results": results}
