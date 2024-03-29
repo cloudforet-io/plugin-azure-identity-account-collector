@@ -1,5 +1,5 @@
-import asyncio
 import logging
+from typing import List
 
 from plugin.manager.base import AzureBaseManager
 from plugin.connector.subscription_connector import SubscriptionConnector
@@ -43,12 +43,13 @@ class ResourceManager(AzureBaseManager):
 
             for entity in entities:
                 entity_info = self.convert_nested_dictionary(entity)
+                print(entity_info)
 
                 if entity_info.get("type") == "/subscriptions":
                     name = entity_info["display_name"]
                     tenant_id = entity_info["tenant_id"]
                     subscription_id = entity_info["name"]
-                    location = entity_info["parent_display_name_chain"]
+                    location = self._create_location_from_entity_info(entity_info)
 
                     result = {
                         "name": name,
@@ -60,9 +61,24 @@ class ResourceManager(AzureBaseManager):
                         "secret_data": {
                             "subscription_id": subscription_id,
                         },
+                        "resource_id": subscription_id,
                         "tags": entity_info.get("tags", {}) or {},
                         "location": location,
                     }
                     results.append(result)
 
         return results
+
+    @staticmethod
+    def _create_location_from_entity_info(entity_info: dict) -> List[dict]:
+        location = []
+        parent_display_name_chain = entity_info.get("parent_display_name_chain", [])
+        parent_name_chain = entity_info.get("parent_name_chain", [])
+        for idx, name in enumerate(parent_display_name_chain):
+            location.append(
+                {
+                    "name": name,
+                    "resource_id": parent_name_chain[idx],
+                }
+            )
+        return location
