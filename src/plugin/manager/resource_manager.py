@@ -43,7 +43,6 @@ class ResourceManager(AzureBaseManager):
 
             for entity in entities:
                 entity_info = self.convert_nested_dictionary(entity)
-                print(entity_info)
 
                 if entity_info.get("type") == "/subscriptions":
                     name = entity_info["display_name"]
