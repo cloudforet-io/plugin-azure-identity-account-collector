@@ -48,7 +48,9 @@ class ResourceManager(AzureBaseManager):
                     name = entity_info["display_name"]
                     tenant_id = entity_info["tenant_id"]
                     subscription_id = entity_info["name"]
-                    location = self._create_location_from_entity_info(entity_info)
+                    location = self._create_location_from_entity_info(
+                        entity_info, options
+                    )
 
                     result = {
                         "name": name,
@@ -69,11 +71,15 @@ class ResourceManager(AzureBaseManager):
         return results
 
     @staticmethod
-    def _create_location_from_entity_info(entity_info: dict) -> List[dict]:
+    def _create_location_from_entity_info(
+        entity_info: dict, options: dict
+    ) -> List[dict]:
         location = []
         parent_display_name_chain = entity_info.get("parent_display_name_chain", [])
         parent_name_chain = entity_info.get("parent_name_chain", [])
         for idx, name in enumerate(parent_display_name_chain):
+            if options.get("exclude_tenant_root_group") and idx == 0:
+                continue
             location.append(
                 {
                     "name": name,

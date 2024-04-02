@@ -22,7 +22,23 @@ def account_collector_init(params: dict) -> dict:
         }
     """
 
-    return {"metadata": {}}
+    metadata = {
+        "options_schema": {
+            "type": "object",
+            "properties": {
+                "exclude_tenant_root_group": {
+                    "title": "Exclude Tenant Root Group",
+                    "type": "boolean",
+                    "default": False,
+                },
+            },
+        }
+    }
+
+    if options := params.get("options"):
+        pass
+
+    return {"metadata": metadata}
 
 
 @app.route("AccountCollector.sync")
@@ -59,7 +75,7 @@ def account_collector_sync(params: dict) -> dict:
     domain_id = params["domain_id"]
 
     results = []
-    for account_collector_manager in AzureBaseManager.get_all_managers(options={}):
+    for account_collector_manager in AzureBaseManager.get_all_managers(options=options):
         ac_mgr = account_collector_manager()
         results.extend(
             ac_mgr.sync(
