@@ -23,7 +23,7 @@ def account_collector_init(params: dict) -> dict:
     """
 
     metadata = {
-        "options_schema": {
+        "additional_options_schema": {
             "type": "object",
             "properties": {
                 "exclude_tenant_root_group": {
