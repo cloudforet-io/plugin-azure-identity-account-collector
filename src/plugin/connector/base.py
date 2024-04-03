@@ -2,8 +2,6 @@ import logging
 import os
 
 from azure.identity import ClientSecretCredential
-from azure.mgmt.authorization import AuthorizationManagementClient
-from azure.mgmt.costmanagement import CostManagementClient
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.managementgroups import ManagementGroupsAPI
 from azure.mgmt.billing import BillingManagementClient
@@ -52,16 +50,6 @@ class AzureBaseConnector(BaseConnector):
 
         self.billing_client: BillingManagementClient = BillingManagementClient(
             credential=credential, subscription_id=subscription_id
-        )
-
-        self.cost_management_client: CostManagementClient = CostManagementClient(
-            credential=credential, subscription_id=subscription_id
-        )
-
-        self.authorization_client: AuthorizationManagementClient = (
-            AuthorizationManagementClient(
-                credential=credential, subscription_id=subscription_id
-            )
         )
 
     def _make_request_headers(self, secret_data, client_type=None):
