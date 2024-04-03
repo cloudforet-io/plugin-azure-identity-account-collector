@@ -68,7 +68,7 @@ class ResourceManager(AzureBaseManager):
                         subscription_info, agreement_type, tenant_id
                     )
 
-                    result = self._make_result(
+                    result = self._make_result_without_secret(
                         tenant_id, subscription_id, name, location
                     )
                     result_subscription_map[subscription_id] = result
@@ -99,7 +99,16 @@ class ResourceManager(AzureBaseManager):
                                         entity_info, options
                                     )
                                 )
-                                result.update({"tags": tags, "location": location})
+                                result.update(
+                                    {
+                                        "tags": tags,
+                                        "location": location,
+                                        "secret_schema_id": "azure-secret-subscription-id",
+                                        "secret_data": {
+                                            "subscription_id": subscription_id
+                                        },
+                                    }
+                                )
                                 if result["data"].get("tenant_id") is None:
                                     result["data"]["tenant_id"] = tenant_id
 
@@ -230,6 +239,26 @@ class ResourceManager(AzureBaseManager):
             "secret_schema_id": "azure-secret-subscription-id",
             "secret_data": {
                 "subscription_id": subscription_id,
+            },
+            "resource_id": subscription_id,
+            "tags": tags,
+            "location": location,
+        }
+        return result
+
+    @staticmethod
+    def _make_result_without_secret(
+        tenant_id: str,
+        subscription_id: str,
+        name: str,
+        location: Union[List[dict], None],
+        tags: dict = None,
+    ) -> dict:
+        result = {
+            "name": name,
+            "data": {
+                "subscription_id": subscription_id,
+                "tenant_id": tenant_id,
             },
             "resource_id": subscription_id,
             "tags": tags,
