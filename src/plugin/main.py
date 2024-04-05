@@ -29,7 +29,7 @@ def account_collector_init(params: dict) -> dict:
                 "exclude_tenant_root_group": {
                     "title": "Exclude Tenant Root Group",
                     "type": "boolean",
-                    "default": False,
+                    "default": True,
                 },
             },
         }

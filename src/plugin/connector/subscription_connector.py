@@ -1,6 +1,8 @@
 import logging
 import asyncio
 
+from azure.core.exceptions import ClientAuthenticationError
+
 from plugin.connector.base import AzureBaseConnector
 
 _LOGGER = logging.getLogger("spaceone")
@@ -22,3 +24,15 @@ class SubscriptionConnector(AzureBaseConnector):
     def list_subscriptions(self) -> dict:
         subscriptions = self.subscription_client.subscriptions.list()
         return subscriptions
+
+    def get_subscription(
+        self, secret_data: dict, subscription_id: str, tenant_id: str = None
+    ) -> dict:
+        try:
+            if tenant_id:
+                self.set_connect(secret_data, tenant_id)
+            subscription = self.subscription_client.subscriptions.get(subscription_id)
+            return subscription
+        except ClientAuthenticationError as e:
+            _LOGGER.error(f"[get_subscription] {e.message} => SKIP")
+            return {}
