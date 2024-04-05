@@ -1,7 +1,7 @@
 import logging
 from typing import List, Union
 
-from azure.core.exceptions import ResourceNotFoundError
+from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
 
 from plugin.manager.base import AzureBaseManager
 from plugin.connector.subscription_connector import SubscriptionConnector
@@ -46,6 +46,7 @@ class ResourceManager(AzureBaseManager):
             agreement_type = billing_account_info.get("agreement_type", "")
 
             result_subscription_map = {}
+            subscription_info_map = {}
             for subscription in billing_connector.list_subscription(
                 secret_data, agreement_type, billing_account_id
             ):
@@ -58,7 +59,9 @@ class ResourceManager(AzureBaseManager):
                 )
 
                 if subscription_status in ["Active"] and subscription_id:
-                    tenant_id = self._get_tenant_id(subscription_info, agreement_type)
+                    tenant_id = self._get_tenant_id(
+                        secret_data, subscription_info, agreement_type
+                    )
 
                     name = self._get_subscription_name(
                         subscription_info, agreement_type
@@ -68,9 +71,19 @@ class ResourceManager(AzureBaseManager):
                         subscription_info, agreement_type, tenant_id
                     )
 
-                    result = self._make_result_without_secret(
-                        tenant_id, subscription_id, name, location
-                    )
+                    if subscription_info_map.get("subscription_id") is None:
+                        subscription_info_map = self._get_subscription_info_map(
+                            subscription_info_map, secret_data, tenant_id
+                        )
+
+                    if subscription_info_map.get(subscription_id):
+                        result = self._make_result(
+                            tenant_id, subscription_id, name, location
+                        )
+                    else:
+                        result = self._make_result_without_secret(
+                            tenant_id, subscription_id, name, location
+                        )
                     result_subscription_map[subscription_id] = result
 
             tenants = subscription_connector.list_tenants()
@@ -103,9 +116,10 @@ class ResourceManager(AzureBaseManager):
                                     {
                                         "tags": tags,
                                         "location": location,
-                                        "secret_schema_id": "azure-secret-subscription-id",
+                                        "secret_schema_id": "azure-secret-multi-tenant",
                                         "secret_data": {
-                                            "subscription_id": subscription_id
+                                            "subscription_id": subscription_id,
+                                            "tenant_id": tenant_id,
                                         },
                                     }
                                 )
@@ -137,6 +151,27 @@ class ResourceManager(AzureBaseManager):
 
         return results
 
+    def _get_subscription_info_map(
+        self, subscription_info_map: dict, secret_data: dict, tenant_id: str
+    ) -> dict:
+        try:
+            subscription_connector = SubscriptionConnector(
+                secret_data=secret_data, tenant_id=tenant_id
+            )
+            subscriptions = subscription_connector.list_subscriptions()
+            for subscription in subscriptions:
+                print(subscription)
+                subscription_info = self.convert_nested_dictionary(subscription)
+                subscription_id = subscription_info.get("subscription_id")
+                if subscription_id:
+                    subscription_info_map[subscription_id] = subscription_info
+        except ClientAuthenticationError as e:
+            _LOGGER.error(f"[_get_subscription_info_map] {e.message}", exc_info=True)
+        except Exception as e:
+            _LOGGER.error(f"[_get_subscription_info_map] {e}", exc_info=True)
+
+        return subscription_info_map
+
     @staticmethod
     def _create_location_from_entity_info(
         entity_info: dict, options: dict
@@ -167,16 +202,13 @@ class ResourceManager(AzureBaseManager):
             return subscription_info.get("subscription_billing_status", "")
 
     @staticmethod
-    def _get_tenant_id(subscription_info: dict, agreement_type: str) -> str:
-        if agreement_type == "EnterpriseAgreement":
-            # EA has different structure, Use enrollment id as tenant id
-            tenant_id = subscription_info.get("properties", {}).get(
-                "enrollmentAccountId", ""
-            )
-        elif agreement_type == "MicrosoftPartnerAgreement":
+    def _get_tenant_id(
+        secret_data: dict, subscription_info: dict, agreement_type: str
+    ) -> Union[str, None]:
+        if agreement_type == "MicrosoftPartnerAgreement":
             tenant_id = subscription_info.get("customer_id").split("/")[-1]
         else:
-            tenant_id = subscription_info.get("tenant_id")
+            tenant_id = secret_data["tenant_id"]
         return tenant_id
 
     @staticmethod
@@ -236,9 +268,10 @@ class ResourceManager(AzureBaseManager):
                 "subscription_id": subscription_id,
                 "tenant_id": tenant_id,
             },
-            "secret_schema_id": "azure-secret-subscription-id",
+            "secret_schema_id": "azure-secret-multi-tenant",
             "secret_data": {
                 "subscription_id": subscription_id,
+                "tenant_id": tenant_id,
             },
             "resource_id": subscription_id,
             "tags": tags,

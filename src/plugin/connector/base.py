@@ -1,7 +1,7 @@
 import logging
 import os
 
-from azure.identity import ClientSecretCredential
+from azure.identity import ClientSecretCredential, DefaultAzureCredential
 from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.mgmt.managementgroups import ManagementGroupsAPI
 from azure.mgmt.billing import BillingManagementClient
@@ -41,15 +41,16 @@ class AzureBaseConnector(BaseConnector):
         self.resource_client: ResourceManagementClient = ResourceManagementClient(
             credential=credential, subscription_id=subscription_id
         )
-        self.subscription_client: SubscriptionClient = SubscriptionClient(
-            credential=credential
-        )
         self.management_groups_client: ManagementGroupsAPI = ManagementGroupsAPI(
             credential=credential
         )
 
         self.billing_client: BillingManagementClient = BillingManagementClient(
             credential=credential, subscription_id=subscription_id
+        )
+
+        self.subscription_client: SubscriptionClient = SubscriptionClient(
+            credential=DefaultAzureCredential()
         )
 
     def _make_request_headers(self, secret_data, client_type=None):
