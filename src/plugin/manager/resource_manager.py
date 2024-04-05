@@ -160,13 +160,12 @@ class ResourceManager(AzureBaseManager):
             )
             subscriptions = subscription_connector.list_subscriptions()
             for subscription in subscriptions:
-                print(subscription)
                 subscription_info = self.convert_nested_dictionary(subscription)
                 subscription_id = subscription_info.get("subscription_id")
                 if subscription_id:
                     subscription_info_map[subscription_id] = subscription_info
         except ClientAuthenticationError as e:
-            _LOGGER.error(f"[_get_subscription_info_map] {e.message}", exc_info=True)
+            pass
         except Exception as e:
             _LOGGER.error(f"[_get_subscription_info_map] {e}", exc_info=True)
 
