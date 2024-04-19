@@ -28,6 +28,23 @@ class BillingConnector(AzureBaseConnector):
         )
         return customers
 
+    def list_departments(self, secret_data: dict, billing_account_id: str) -> list:
+        try:
+            api_version = "2019-10-01-preview"
+            self.next_link = f"https://management.azure.com/providers/Microsoft.Billing/billingAccounts/{billing_account_id}/departments?api-version={api_version}"
+
+            while self.next_link:
+                url = self.next_link
+
+                headers = self._make_request_headers(secret_data)
+                response = requests.get(url=url, headers=headers)
+                response_json = response.json()
+
+                self.next_link = response_json.get("properties").get("nextLink", None)
+                yield response_json
+        except Exception as e:
+            raise ERROR_UNKNOWN(message=f"[ERROR] list_departments {e}")
+
     def list_subscription(
         self, secret_data: dict, agreement_type: str, billing_account_id: str
     ) -> list:
