@@ -85,6 +85,10 @@ class ResourceManager(AzureBaseManager):
                             tenant_id, subscription_id, name, location
                         )
                     result_subscription_map[subscription_id] = result
+            if agreement_type == "EnterpriseAgreement":
+                departments = billing_connector.list_departments(
+                    secret_data, billing_account_id
+                )
 
             tenants = subscription_connector.list_tenants()
             try:
@@ -179,7 +183,7 @@ class ResourceManager(AzureBaseManager):
         parent_display_name_chain = entity_info.get("parent_display_name_chain", [])
         parent_name_chain = entity_info.get("parent_name_chain", [])
         for idx, name in enumerate(parent_display_name_chain):
-            if options.get("exclude_tenant_root_group") and idx == 0:
+            if options.get("exclude_root_management_group") and idx == 0:
                 continue
             location.append(
                 {
@@ -245,6 +249,8 @@ class ResourceManager(AzureBaseManager):
             location_name = subscription_info.get("customer_display_name", "")
 
         if location_name and resource_id:
+            if resource_id == "23fd0c55-250c-4a62-b124-f7ca35ce2061":
+                print(subscription_info, "okok")
             location = [
                 {
                     "name": location_name,

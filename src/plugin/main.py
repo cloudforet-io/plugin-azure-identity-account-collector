@@ -22,21 +22,20 @@ def account_collector_init(params: dict) -> dict:
         }
     """
 
+    options = params.get("options", {}) or {}
+
     metadata = {
         "additional_options_schema": {
             "type": "object",
             "properties": {
-                "exclude_tenant_root_group": {
+                "exclude_root_management_group": {
                     "title": "Exclude Tenant Root Group",
+                    "oneOf": [True, False],
                     "type": "boolean",
-                    "default": True,
                 },
             },
         }
     }
-
-    if options := params.get("options"):
-        pass
 
     return {"metadata": metadata}
 
