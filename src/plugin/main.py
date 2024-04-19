@@ -30,8 +30,7 @@ def account_collector_init(params: dict) -> dict:
             "properties": {
                 "exclude_root_management_group": {
                     "title": "Exclude Tenant Root Group",
-                    "oneOf": [True, False],
-                    "type": "boolean",
+                    "oneOf": [{"type": "boolean", "default": True}],
                 },
             },
         }
