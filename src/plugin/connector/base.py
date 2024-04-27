@@ -53,8 +53,9 @@ class AzureBaseConnector(BaseConnector):
             credential=DefaultAzureCredential()
         )
 
-    def _make_request_headers(self, secret_data, client_type=None):
-        access_token = self._get_access_token(secret_data)
+    def _make_request_headers(self, secret_data, access_token=None):
+        if not access_token:
+            access_token = self._get_access_token(secret_data)
         headers = {
             "Authorization": f"Bearer {access_token}",
             "Content-Type": "application/json",
