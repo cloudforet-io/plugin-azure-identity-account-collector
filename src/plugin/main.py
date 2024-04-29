@@ -37,6 +37,11 @@ def account_collector_init(params: dict) -> dict:
         }
     }
 
+    if exclude_root_management_group := options.get("exclude_root_management_group"):
+        metadata["additional_options_schema"]["properties"][
+            "exclude_root_management_group"
+        ]["default"] = exclude_root_management_group
+
     return {"metadata": metadata}
 
 
