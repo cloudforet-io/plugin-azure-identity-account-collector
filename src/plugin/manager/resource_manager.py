@@ -50,6 +50,7 @@ class ResourceManager(AzureBaseManager):
             for subscription in billing_connector.list_subscription(
                 secret_data, agreement_type, billing_account_id
             ):
+                result = {}
                 subscription_info = self.convert_nested_dictionary(subscription)
                 subscription_status = self._get_subscription_status(
                     subscription_info, agreement_type
@@ -58,23 +59,25 @@ class ResourceManager(AzureBaseManager):
                     subscription_info, agreement_type
                 )
 
-                if subscription_status in ["Active"] and subscription_id:
-                    tenant_id = self._get_tenant_id(
-                        secret_data, subscription_info, agreement_type
-                    )
+                if not subscription_id:
+                    continue
 
-                    name = self._get_subscription_name(
-                        subscription_info, agreement_type
-                    )
+                tenant_id = self._get_tenant_id(
+                    secret_data, subscription_info, agreement_type
+                )
 
-                    location = self._get_location(
-                        subscription_info, agreement_type, tenant_id
-                    )
+                name = self._get_subscription_name(subscription_info, agreement_type)
 
-                    if subscription_info_map.get("subscription_id") is None:
-                        subscription_info_map = self._get_subscription_info_map(
-                            subscription_info_map, secret_data, tenant_id
-                        )
+                location = self._get_location(
+                    subscription_info, agreement_type, tenant_id
+                )
+
+                if subscription_status in ["Active"]:
+                    # Disable Temporary
+                    # if subscription_info_map.get("subscription_id") is None:
+                    #     subscription_info_map = self._get_subscription_info_map(
+                    #         subscription_info_map, secret_data, tenant_id
+                    #     )
 
                     if subscription_info_map.get(subscription_id):
                         result = self._make_result(
@@ -84,7 +87,9 @@ class ResourceManager(AzureBaseManager):
                         result = self._make_result_without_secret(
                             tenant_id, subscription_id, name, location
                         )
+                if result:
                     result_subscription_map[subscription_id] = result
+
             if agreement_type == "EnterpriseAgreement":
                 departments = billing_connector.list_departments(
                     secret_data, billing_account_id
@@ -153,6 +158,8 @@ class ResourceManager(AzureBaseManager):
                     if result_info.get("data").get("tenant_id"):
                         results.append(result_info)
 
+        _LOGGER.debug(f"[sync] total results: {len(results)}")
+
         return results
 
     def _get_subscription_info_map(
@@ -210,6 +217,9 @@ class ResourceManager(AzureBaseManager):
     ) -> Union[str, None]:
         if agreement_type == "MicrosoftPartnerAgreement":
             tenant_id = subscription_info.get("customer_id").split("/")[-1]
+        elif agreement_type == "EnterpriseAgreement":
+            # todo : modify to enrollment id
+            tenant_id = secret_data["tenant_id"]
         else:
             tenant_id = secret_data["tenant_id"]
         return tenant_id
@@ -245,10 +255,13 @@ class ResourceManager(AzureBaseManager):
             properties_info = subscription_info.get("properties", {})
             location_name = properties_info["enrollmentAccountDisplayName"]
             resource_id = properties_info["enrollmentAccountId"]
-        else:
+        elif agreement_type == "MicrosoftPartnerAgreement":
             location_name = subscription_info.get("customer_display_name", "")
+        else:
+            location_name = None
 
         if location_name and resource_id:
+            location_name = location_name.strip()
             location = [
                 {
                     "name": location_name,
