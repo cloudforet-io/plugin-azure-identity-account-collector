@@ -33,15 +33,30 @@ def account_collector_init(params: dict) -> dict:
                     "type": "boolean",
                     "default": True,
                 },
+                "sync_customers": {
+                    "title": "Sync Customers",
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "default": [],
+                    "description": "Only can use MicrosoftPartnerAgreement. If empty, all customers will be synced.",
+                },
             },
         }
     }
 
-    if exclude_root_management_group := options.get("exclude_root_management_group"):
-        metadata["additional_options_schema"]["properties"][
-            "exclude_root_management_group"
-        ]["default"] = exclude_root_management_group
+    additional_options_schema = metadata["additional_options_schema"]
 
+    if exclude_root_management_group := options.get("exclude_root_management_group"):
+        additional_options_schema["properties"]["exclude_root_management_group"][
+            "default"
+        ] = exclude_root_management_group
+
+    if sync_customers := options.get("sync_customers"):
+        additional_options_schema["properties"]["sync_customers"][
+            "default"
+        ] = sync_customers
+
+    metadata["additional_options_schema"] = additional_options_schema
     return {"metadata": metadata}
 
 
