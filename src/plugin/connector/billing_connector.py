@@ -46,17 +46,35 @@ class BillingConnector(AzureBaseConnector):
             raise ERROR_UNKNOWN(message=f"[ERROR] list_departments {e}")
 
     def list_subscription(
-        self, secret_data: dict, agreement_type: str, billing_account_id: str
+        self,
+        options: dict,
+        secret_data: dict,
+        agreement_type: str,
+        billing_account_id: str,
     ) -> list:
+        subscriptions = []
+
         if agreement_type == "EnterpriseAgreement":
             subscriptions = self.list_subscription_http(secret_data, billing_account_id)
         else:
-            subscriptions = (
-                self.billing_client.billing_subscriptions.list_by_billing_account(
-                    billing_account_name=billing_account_id,
-                    api_version="2020-12-15-privatepreview",
+            if sync_customers := options.get("sync_customers"):
+                for customer_id in sync_customers:
+                    print(customer_id)
+                    customer_subscriptions = (
+                        self.billing_client.billing_subscriptions.list_by_customer(
+                            billing_account_name=billing_account_id,
+                            api_version="2020-05-01",
+                            customer_name=customer_id,
+                        )
+                    )
+                    subscriptions.extend(customer_subscriptions)
+            else:
+                subscriptions = (
+                    self.billing_client.billing_subscriptions.list_by_billing_account(
+                        billing_account_name=billing_account_id,
+                        api_version="2020-12-15-privatepreview",
+                    )
                 )
-            )
         return subscriptions
 
     def list_subscription_http(

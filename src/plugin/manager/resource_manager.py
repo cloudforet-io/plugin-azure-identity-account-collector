@@ -48,7 +48,7 @@ class ResourceManager(AzureBaseManager):
             result_subscription_map = {}
             subscription_info_map = {}
             for subscription in billing_connector.list_subscription(
-                secret_data, agreement_type, billing_account_id
+                options, secret_data, agreement_type, billing_account_id
             ):
                 result = {}
                 subscription_info = self.convert_nested_dictionary(subscription)
