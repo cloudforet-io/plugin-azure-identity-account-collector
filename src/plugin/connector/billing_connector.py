@@ -20,13 +20,13 @@ class BillingConnector(AzureBaseConnector):
         billing_accounts = self.billing_client.billing_accounts.list(
             api_version="2022-10-01-privatepreview"
         )
-        return billing_accounts
+        return list(billing_accounts)
 
     def list_customers(self, billing_account_id: str) -> list:
         customers = self.billing_client.customers.list_by_billing_account(
             billing_account_name=billing_account_id
         )
-        return customers
+        return list(customers)
 
     def list_departments(self, secret_data: dict, billing_account_id: str) -> list:
         try:
@@ -59,7 +59,6 @@ class BillingConnector(AzureBaseConnector):
         else:
             if sync_customers := options.get("sync_customers"):
                 for customer_id in sync_customers:
-                    print(customer_id)
                     customer_subscriptions = (
                         self.billing_client.billing_subscriptions.list_by_customer(
                             billing_account_name=billing_account_id,

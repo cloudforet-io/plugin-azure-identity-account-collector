@@ -74,10 +74,10 @@ class ResourceManager(AzureBaseManager):
 
                 if subscription_status in ["Active"]:
                     # Disable Temporary
-                    # if subscription_info_map.get("subscription_id") is None:
-                    #     subscription_info_map = self._get_subscription_info_map(
-                    #         subscription_info_map, secret_data, tenant_id
-                    #     )
+                    if subscription_info_map.get("subscription_id") is None:
+                        subscription_info_map = self._get_subscription_info_map(
+                            subscription_info_map, secret_data, tenant_id
+                        )
 
                     if subscription_info_map.get(subscription_id):
                         result = self._make_result(
