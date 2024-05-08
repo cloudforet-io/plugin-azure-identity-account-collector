@@ -21,9 +21,9 @@ class SubscriptionConnector(AzureBaseConnector):
         tenants = self.subscription_client.tenants.list()
         return tenants
 
-    def list_subscriptions(self) -> dict:
+    def list_subscriptions(self) -> list:
         subscriptions = self.subscription_client.subscriptions.list()
-        return subscriptions
+        return list(subscriptions)
 
     def get_subscription(
         self, secret_data: dict, subscription_id: str, tenant_id: str = None
