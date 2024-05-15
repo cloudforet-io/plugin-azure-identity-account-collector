@@ -1,7 +1,11 @@
+import logging
+
 from spaceone.identity.plugin.account_collector.lib.server import (
     AccountCollectorPluginServer,
 )
 from plugin.manager.base import AzureBaseManager
+
+_LOGGER = logging.getLogger("spaceone")
 
 app = AccountCollectorPluginServer()
 
@@ -94,7 +98,29 @@ def account_collector_sync(params: dict) -> dict:
     domain_id = params["domain_id"]
 
     results = []
-    for account_collector_manager in AzureBaseManager.get_all_managers(options={}):
+    billing_accounts = AzureBaseManager.list_billing_accounts(secret_data)
+
+    for billing_account in billing_accounts:
+        agreement_type = _get_agreement_type(billing_account)
+        billing_account_id = billing_account.name or None
+
+        account_collector_manager = AzureBaseManager.get_manager_by_agreement_type(
+            agreement_type
+        )
+        ac_mgr = account_collector_manager()
+        results.extend(
+            ac_mgr.sync(
+                options=options,
+                secret_data=secret_data,
+                domain_id=domain_id,
+                billing_account_id=billing_account_id,
+                schema_id=schema_id,
+            )
+        )
+    if not billing_accounts:
+        account_collector_manager = AzureBaseManager.get_manager_by_agreement_type(
+            "Unknown"
+        )
         ac_mgr = account_collector_manager()
         results.extend(
             ac_mgr.sync(
@@ -106,3 +132,13 @@ def account_collector_sync(params: dict) -> dict:
         )
 
     return {"results": results}
+
+
+def _get_agreement_type(billing_account) -> str:
+    agreement_type = "Unknown"
+    try:
+        agreement_type = billing_account.agreement_type
+    except Exception as e:
+        _LOGGER.debug(f"Failed to get agreement_type: {e}")
+
+    return agreement_type

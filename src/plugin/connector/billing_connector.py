@@ -29,8 +29,9 @@ class BillingConnector(AzureBaseConnector):
         return list(customers)
 
     def list_departments(self, secret_data: dict, billing_account_id: str) -> list:
+        departments = []
         try:
-            api_version = "2019-10-01-preview"
+            api_version = "2020-12-15-privatepreview"
             self.next_link = f"https://management.azure.com/providers/Microsoft.Billing/billingAccounts/{billing_account_id}/departments?api-version={api_version}"
 
             while self.next_link:
@@ -39,11 +40,42 @@ class BillingConnector(AzureBaseConnector):
                 headers = self._make_request_headers(secret_data)
                 response = requests.get(url=url, headers=headers)
                 response_json = response.json()
+                response_value = response_json.get("value", [])
 
-                self.next_link = response_json.get("properties").get("nextLink", None)
-                yield response_json
+                self.next_link = response_json.get("nextLink", None)
+                departments.extend(response_value)
+
         except Exception as e:
             raise ERROR_UNKNOWN(message=f"[ERROR] list_departments {e}")
+
+        return departments
+
+    def list_subscription_by_department(
+        self,
+        options: dict,
+        secret_data: dict,
+        department_id: str,
+        billing_account_id: str,
+    ) -> list:
+        subscriptions = []
+        try:
+            api_version = "2020-12-15-privatepreview"
+            self.next_link = f"https://management.azure.com/providers/Microsoft.Billing/billingAccounts/{billing_account_id}/departments/{department_id}/billingSubscriptions?api-version={api_version}"
+
+            while self.next_link:
+                url = self.next_link
+
+                headers = self._make_request_headers(secret_data)
+                response = requests.get(url=url, headers=headers)
+                response_json = response.json()
+                response_value = response_json.get("value", [])
+
+                self.next_link = response_json.get("nextLink", None)
+                subscriptions.extend(response_value)
+        except Exception as e:
+            raise ERROR_UNKNOWN(message=f"[ERROR] list_subscription_by_department {e}")
+
+        return subscriptions
 
     def list_subscription(
         self,

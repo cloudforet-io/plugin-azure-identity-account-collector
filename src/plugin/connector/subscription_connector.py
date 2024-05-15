@@ -1,7 +1,8 @@
 import logging
-import asyncio
 
-from azure.core.exceptions import ClientAuthenticationError
+from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
+
+from spaceone.core.error import ERROR_UNKNOWN
 
 from plugin.connector.base import AzureBaseConnector
 
@@ -34,5 +35,12 @@ class SubscriptionConnector(AzureBaseConnector):
             subscription = self.subscription_client.subscriptions.get(subscription_id)
             return subscription
         except ClientAuthenticationError as e:
-            _LOGGER.error(f"[get_subscription] {e.message} => SKIP")
+            _LOGGER.debug(f"[get_subscription] {e.status_code} {e.error} => SKIP")
             return {}
+
+        except HttpResponseError as e:
+            _LOGGER.debug(f"[get_subscription] {e.status_code} {e.error}  => SKIP")
+            return {}
+
+        except Exception as e:
+            raise ERROR_UNKNOWN(message=f"[ERROR] get_subscription {e}")
