@@ -1,12 +1,7 @@
 import logging
-from typing import List, Union
 
-from azure.core.exceptions import ResourceNotFoundError, ClientAuthenticationError
-
-from plugin.manager.base import AzureBaseManager
 from plugin.connector.subscription_connector import SubscriptionConnector
-from plugin.connector.management_groups_connector import ManagementGroupsConnector
-from plugin.connector.billing_connector import BillingConnector
+from plugin.manager.base import AzureBaseManager
 from plugin.manager.management_group_manger import ManagementGroupManager
 
 _LOGGER = logging.getLogger("spaceone")
@@ -72,12 +67,7 @@ class ResourceManager(AzureBaseManager):
                     )
                     subscription_tags = subscription_info.get("tags", {})
 
-                    location = [
-                        {
-                            "name": tenant.display_name or "Home",
-                            "resource_id": tenant_id,
-                        }
-                    ]
+                    location = []
 
                     if tenant_id not in management_group_location_map.keys():
                         management_group_location_map = (
@@ -93,6 +83,35 @@ class ResourceManager(AzureBaseManager):
                         management_group_location = management_group_location_map[
                             tenant_id
                         ].get(subscription_id)
+
+                        use_mg_as_workspace = options.get(
+                            "azure_management_group_mapping_type"
+                        )
+
+                        if (
+                            use_mg_as_workspace
+                            in ("Top Management Group", "Leaf Management Group")
+                            and not management_group_location
+                        ):
+                            location = [
+                                {
+                                    "name": "Tenant Root Group",
+                                    "resource_id": tenant_id,
+                                }
+                            ]
+                        elif (
+                            use_mg_as_workspace == "Leaf Management Group"
+                            and management_group_location
+                        ):
+                            management_group_location = [management_group_location[-1]]
+                        else:
+                            location = [
+                                {
+                                    "name": tenant.display_name or "Home",
+                                    "resource_id": tenant_id,
+                                }
+                            ]
+
                         location.extend(management_group_location)
 
                     if subscription_info_map.get(subscription_id):
