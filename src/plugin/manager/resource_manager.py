@@ -99,11 +99,19 @@ class ResourceManager(AzureBaseManager):
                                     "resource_id": tenant_id,
                                 }
                             ]
+
                         elif (
                             use_mg_as_workspace == "Leaf Management Group"
                             and management_group_location
                         ):
                             management_group_location = [management_group_location[-1]]
+
+                        elif (
+                            use_mg_as_workspace == "Top Management Group"
+                            and management_group_location
+                        ):
+                            pass
+
                         else:
                             location = [
                                 {
