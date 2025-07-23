@@ -3,8 +3,8 @@ from typing import List
 
 from azure.core.exceptions import ResourceNotFoundError
 
-from plugin.manager.base import AzureBaseManager
 from plugin.connector.management_groups_connector import ManagementGroupsConnector
+from plugin.manager.base import AzureBaseManager
 
 _LOGGER = logging.getLogger("spaceone")
 
@@ -59,7 +59,7 @@ class ManagementGroupManager(AzureBaseManager):
                 continue
             location.append(
                 {
-                    "name": name,
+                    "name": name.strip(),
                     "resource_id": parent_name_chain[idx],
                 }
             )
