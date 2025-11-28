@@ -1,9 +1,9 @@
 import logging
 from typing import List
 
-from plugin.manager.base import AzureBaseManager
-from plugin.connector.subscription_connector import SubscriptionConnector
 from plugin.connector.billing_connector import BillingConnector
+from plugin.connector.subscription_connector import SubscriptionConnector
+from plugin.manager.base import AzureBaseManager
 from plugin.manager.management_group_manger import ManagementGroupManager
 
 _LOGGER = logging.getLogger("spaceone")
@@ -62,6 +62,7 @@ class EAManager(AzureBaseManager):
                     subscription_name = self.get_subscription_name(
                         subscription_info, self.agreement_type
                     )
+
                     location = [{"name": department_name, "resource_id": department_id}]
 
                     if not options.get("exclude_enrollment_account", False):
@@ -84,11 +85,15 @@ class EAManager(AzureBaseManager):
                         management_group_location = management_group_location_map[
                             tenant_id
                         ].get(subscription_id)
+
                         location.extend(management_group_location)
 
-                    subscription_info = subscription_connector.get_subscription(
-                        secret_data, subscription_id
+                    subscription_info = self.convert_nested_dictionary(
+                        subscription_connector.get_subscription(
+                            secret_data, subscription_id
+                        )
                     )
+
                     if subscription_info:
                         inject_secret = True
                         subscription_tags = subscription_info.get("tags", {})
