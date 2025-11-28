@@ -17,12 +17,12 @@ class EAManager(AzureBaseManager):
         super().__init__(*args, **kwargs)
 
     def sync(
-            self,
-            options: dict,
-            secret_data: dict,
-            domain_id: str,
-            billing_account_id: str,
-            schema_id: str = None,
+        self,
+        options: dict,
+        secret_data: dict,
+        domain_id: str,
+        billing_account_id: str,
+        schema_id: str = None,
     ) -> List[dict]:
         results = []
 
@@ -37,13 +37,13 @@ class EAManager(AzureBaseManager):
         )
 
         for department in billing_connector.list_departments(
-                secret_data, billing_account_id
+            secret_data, billing_account_id
         ):
             department_id = department["name"]
             department_name = department.get("properties", {}).get("departmentName")
 
             for subscription in billing_connector.list_subscription_by_department(
-                    options, secret_data, department_id, billing_account_id
+                options, secret_data, department_id, billing_account_id
             ):
                 subscription_info = self.convert_nested_dictionary(subscription)
                 subscription_status = self.get_subscription_status(
@@ -115,7 +115,7 @@ class EAManager(AzureBaseManager):
 
     @staticmethod
     def _get_enrollment_account_location(
-            subscription_info: dict, location: list
+        subscription_info: dict, location: list
     ) -> List[dict]:
         properties_info = subscription_info.get("properties", {})
         location_name = properties_info["enrollmentAccountDisplayName"]
