@@ -1,9 +1,9 @@
 import logging
 from typing import List
 
-from plugin.manager.base import AzureBaseManager
-from plugin.connector.subscription_connector import SubscriptionConnector
 from plugin.connector.billing_connector import BillingConnector
+from plugin.connector.subscription_connector import SubscriptionConnector
+from plugin.manager.base import AzureBaseManager
 from plugin.manager.management_group_manger import ManagementGroupManager
 
 _LOGGER = logging.getLogger("spaceone")
@@ -17,12 +17,12 @@ class EAManager(AzureBaseManager):
         super().__init__(*args, **kwargs)
 
     def sync(
-        self,
-        options: dict,
-        secret_data: dict,
-        domain_id: str,
-        billing_account_id: str,
-        schema_id: str = None,
+            self,
+            options: dict,
+            secret_data: dict,
+            domain_id: str,
+            billing_account_id: str,
+            schema_id: str = None,
     ) -> List[dict]:
         results = []
 
@@ -37,13 +37,13 @@ class EAManager(AzureBaseManager):
         )
 
         for department in billing_connector.list_departments(
-            secret_data, billing_account_id
+                secret_data, billing_account_id
         ):
             department_id = department["name"]
             department_name = department.get("properties", {}).get("departmentName")
 
             for subscription in billing_connector.list_subscription_by_department(
-                options, secret_data, department_id, billing_account_id
+                    options, secret_data, department_id, billing_account_id
             ):
                 subscription_info = self.convert_nested_dictionary(subscription)
                 subscription_status = self.get_subscription_status(
@@ -62,6 +62,7 @@ class EAManager(AzureBaseManager):
                     subscription_name = self.get_subscription_name(
                         subscription_info, self.agreement_type
                     )
+
                     location = [{"name": department_name, "resource_id": department_id}]
 
                     if not options.get("exclude_enrollment_account", False):
@@ -84,11 +85,15 @@ class EAManager(AzureBaseManager):
                         management_group_location = management_group_location_map[
                             tenant_id
                         ].get(subscription_id)
+
                         location.extend(management_group_location)
 
-                    subscription_info = subscription_connector.get_subscription(
-                        secret_data, subscription_id
+                    subscription_info = self.convert_nested_dictionary(
+                        subscription_connector.get_subscription(
+                            secret_data, subscription_id
+                        )
                     )
+
                     if subscription_info:
                         inject_secret = True
                         subscription_tags = subscription_info.get("tags", {})
@@ -110,7 +115,7 @@ class EAManager(AzureBaseManager):
 
     @staticmethod
     def _get_enrollment_account_location(
-        subscription_info: dict, location: list
+            subscription_info: dict, location: list
     ) -> List[dict]:
         properties_info = subscription_info.get("properties", {})
         location_name = properties_info["enrollmentAccountDisplayName"]
