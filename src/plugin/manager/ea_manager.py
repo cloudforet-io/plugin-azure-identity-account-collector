@@ -84,7 +84,7 @@ class EAManager(AzureBaseManager):
                     if management_group_location_map.get(tenant_id):
                         management_group_location = management_group_location_map[
                             tenant_id
-                        ].get(subscription_id)
+                        ].get(subscription_id, [])
 
                         location.extend(management_group_location)
 
