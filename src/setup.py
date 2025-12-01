@@ -21,7 +21,7 @@ with open("VERSION", "r") as f:
     f.close()
 
 setup(
-    name="plugin-azure-identity-account-collector",
+    name="plugin_azure_identity_account_collector",
     version=VERSION,
     description="Account Collector plugin for Azure",
     long_description="",
